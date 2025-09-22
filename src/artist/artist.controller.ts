@@ -7,7 +7,7 @@ import { AuthService } from 'src/modules/auth/auth.service';
 import { Response } from 'express';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/role.guard';
-import { RequiredRole } from 'src/common/decorators/role.decorator';
+import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enums/role.enum';
 
 @Controller('artist')
@@ -25,18 +25,27 @@ export class ArtistController {
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  async login(@Body() dto: LoginArtistDto, @Res({ passthrough: true }) res: Response) {
-    const { access_token } = await this.authService.signIn(dto.username, dto.password, 'artist');
+  async signIn(
+  @Body() loginArtistDto: LoginArtistDto,
+  @Res({ passthrough: true }) res: Response,
+) {
+  const { access_token } = await this.authService.signIn(
+    loginArtistDto.username,
+    loginArtistDto.password,
+    'artist',
+  );
 
-    res.cookie('Authorization', `Bearer ${access_token}`, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      maxAge: parseInt(process.env.JWT_COOKIE_EXPIRATION ?? '3600000'),
-    });
+  const isProd = process.env.NODE_ENV === 'production';
+res.cookie('Authorization', `Bearer ${access_token}`, {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? 'strict' : 'lax',
+  maxAge: parseInt(process.env.JWT_EXPIRES_IN ?? '3600000'),
+});
 
-    return { message: 'Login successful' };
-  }
+  return { message: 'Artist login successful' };
+}
+
 
   @Get()
   async findAll() {
@@ -49,18 +58,18 @@ export class ArtistController {
   }
 
   @UseGuards(AuthGuard, RolesGuard)
-  @RequiredRole(Role.Artist)
+  @Roles(Role.Artist)
   @Put(':id')
   async update(@Param('id') id: string, @Req() req, @Body() dto: UpdateArtistDto) {
-    if (req.user.id !== id) throw new UnauthorizedException('Not authorized to update this artist');
+    if (String(req.user.id) !== String(id)) throw new UnauthorizedException('Not authorized to update this artist');
     return this.artistService.update(id, dto);
   }
 
   @UseGuards(AuthGuard, RolesGuard)
-  @RequiredRole(Role.Artist)
+  @Roles(Role.Artist)
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req) {
-    if (req.user.id !== id) throw new UnauthorizedException('Not authorized to delete this artist');
+    if (String(req.user.id) !== String(id)) throw new UnauthorizedException('Not authorized to delete this artist');
     return this.artistService.remove(id);
   }
 }

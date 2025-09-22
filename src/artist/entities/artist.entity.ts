@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Art } from 'src/modules/art/entities/art.entity';
 
 @Entity('artist')
-export class Artist implements User {
+export class Artist  {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

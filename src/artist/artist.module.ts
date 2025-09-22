@@ -5,7 +5,7 @@ import { ArtistService } from './artist.service';
 import { ArtistController } from './artist.controller';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
-import { MailerModule } from 'src/modules/mailer/mailer.module';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [

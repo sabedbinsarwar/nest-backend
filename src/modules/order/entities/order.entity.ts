@@ -22,7 +22,7 @@ export class Order {
     @Column()
     paymentType: string;
 
-    @OneToMany(() => OrderItem, orderItem => orderItem.order, { cascade: true })
+    @OneToMany(() => OrderItem, orderItem => orderItem.order)
     orderItems: OrderItem[]
     // admin: any;
     @ManyToOne(() => Admin, admin => admin.orders, { onDelete: "SET NULL" })

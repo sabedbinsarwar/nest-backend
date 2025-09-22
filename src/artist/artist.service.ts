@@ -5,14 +5,13 @@ import { Artist } from './entities/artist.entity';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import * as bcrypt from 'bcrypt';
-import { MailerService } from 'src/modules/mailer/mailer.service';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class ArtistService {
   constructor(
     @InjectRepository(Artist)
     private readonly artistRepository: Repository<Artist>,
-    private readonly mailerService: MailerService,
   ) {}
 
   async create(dto: CreateArtistDto) {
@@ -34,9 +33,6 @@ export class ArtistService {
 
     const saved = await this.artistRepository.save(artist);
 
-    // fire-and-forget welcome email (don't block user creation on mail failure)
-    this.mailerService.sendWelcomeMail(saved.email, saved.username).catch(() => undefined);
-
     return saved;
   }
 
@@ -55,6 +51,8 @@ export class ArtistService {
     if (!artist) return null;
     return artist;
   }
+  
+
 
   async update(id: string, dto: UpdateArtistDto) {
     const artist = await this.artistRepository.findOne({ where: { id } });

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, BadRequestException, UsePipes, ValidationPipe, NotFoundException , UseGuards, Res} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, BadRequestException, UsePipes, ValidationPipe, NotFoundException , UseGuards, Res, ParseIntPipe} from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
@@ -10,12 +10,13 @@ import { Request } from '@nestjs/common';
 import { AdminSignInDto } from './dto/admin-signin.dto';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/role.guard';
-import { RequiredRole } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enums/role.enum';
+import { Roles } from 'src/common/decorators/role.decorator';
 import { Art } from 'src/modules/art/entities/art.entity';
 import { Order } from 'src/modules/order/entities/order.entity';
 import { Response } from 'express';
-import { MailerService } from 'src/modules/mailer/mailer.service';
+import { CreateCustomerDto } from 'src/modules/customer/dto/create-customer.dto';
+// import { MailerService } from '@nestjs-modules/mailer';
 
 @Controller('admin')
 export class AdminController {
@@ -23,7 +24,7 @@ export class AdminController {
   // authService: any;
   constructor(private readonly adminService: AdminService,
     private readonly authService: AuthService,
-    private readonly mailerService: MailerService
+    // private readonly mailerService: MailerService
   ) {}
   
 //? Admin registration endpoint with file upload
@@ -39,13 +40,8 @@ export class AdminController {
     limits: {
       fileSize: 2 * 1024 * 1024,
     },
-    // storage: diskStorage({
-    //   destination: './uploads/admin/nid',
-    //   filename: function (req, file, cb) {
-    //     cb(null, Date.now() + file.originalname)
-    //   }
-    // }) 
-    storage: memoryStorage()
+    storage: memoryStorage() // Store files in memory as Buffer (for small files like images
+
   }))
   @UsePipes(new ValidationPipe({ transform: true }))
   create(@Body() createAdminDto: CreateAdminDto, @UploadedFile() file: Express.Multer.File) {
@@ -61,17 +57,9 @@ export class AdminController {
   
 //? Admin SignIn endpoint 
   @Post('signin')
-  async signIn(
-    @Body() adminSignInDto: AdminSignInDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async signIn(@Body() adminSignInDto: AdminSignInDto,@Res({ passthrough: true }) res: Response,) {
     // 🔹 Authenticate admin
-    const { access_token } = await this.authService.signIn(
-      adminSignInDto.username,
-      adminSignInDto.password,
-      'admin',
-    );
-
+    const { access_token } = await this.authService.signIn(adminSignInDto.username,adminSignInDto.password,'admin',);
     // 🔹 Set cookie with JWT
     res.cookie('Authorization', `Bearer ${access_token}`, {
       httpOnly: true,
@@ -81,35 +69,41 @@ export class AdminController {
     });
 
     // 🔹 Send login notification email
-    await this.mailerService.sendEmail({
-      recipients: [process.env.EMAIL_USER || 'sifat.sai3@gmail.com'], // you can also use adminSignInDto.email if available
-      subject: 'Admin Login Alert',
-      html: `<h3>Hello Admin,</h3>
-             <p>You have successfully signed in at: ${new Date().toLocaleString()}</p>
-             <p>If this wasn’t you, please secure your account immediately.</p>`,
-      text: `You signed in at ${new Date().toLocaleString()}`,
-    });
+    // await this.mailerService.sendMail({
+    //   to: [process.env.EMAIL_USER || 'sifat.sai3@gmail.com'], // you can also use adminSignInDto.email if available
+    //   subject: 'Admin Login Alert',
+    //   html: `<h3>Hello Admin,</h3>
+    //          <p>You have successfully signed in at: ${new Date().toLocaleString()}</p>
+    //          <p>If this wasn’t you, please secure your account immediately.</p>`,
+    //   text: `You signed in at ${new Date().toLocaleString()}`,
+    // });
 
-    // ✅ Response
+
     return { message: 'SignIn successful, email sent' };
   }
 
   //? Adminn profile endpoint
-  
 @UseGuards(AuthGuard, RolesGuard) 
-@RequiredRole(Role.Admin) 
+@Roles(Role.Admin)
 @Get('profile')
-  async profile(@Request() request) {
-    console.log(request.user);
-    const admin = await this.adminService.findOneWithPassword(request.user.id);
-    if (!admin) {
-      throw new NotFoundException('No admin found!');
-    }
-    const { password, ...rest } = admin;
-    return rest;
+async profile(@Request() request) {
+  // console.log("Decoded user:", request.user);
+  const admin = await this.adminService.findOneWithPassword(request.user.id);
+  if (!admin) {
+    throw new NotFoundException('No admin found!');
   }
+    // console.log("Admin data from DB:", admin); // Debug what's coming from DB
 
-
+  const { password, nidImage, ...rest } = admin;
+  
+  const nidImageBase64 = nidImage?.toString('base64');
+  
+  return {
+    ...rest,
+      nid: rest.nid,
+    nidImage: nidImageBase64 ? `data:image/jpeg;base64,${nidImageBase64}` : null
+  };
+}
 //? Get Admin list 
   @Get()
   findAll() {
@@ -117,10 +111,11 @@ export class AdminController {
   }
 //? Get Admin by ID
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.adminService.findOne(+id);
-  }
+@Get(':id')
+findOne(@Param('id', ParseIntPipe) id: number) {
+  return this.adminService.findOne(id);
+}
+
 //? update Admin by status
 
   @Patch(':id/status')
@@ -158,7 +153,7 @@ export class AdminController {
 @Post(':id/customers')
 createCustomer(
   @Param('id') id: string,
-  @Body() customerData: Customer, 
+  @Body() customerData: Customer | CreateCustomerDto, 
 ) {
   return this.adminService.createCustomer(+id, customerData);
 }
@@ -179,7 +174,10 @@ removeCustomerById(
 ) {
   return this.adminService.removeCustomerById(+id, customerId);
 }
-
+@Get(':id/customers')
+getCustomers(@Param('id') id: string) {
+  return this.adminService.getCustomers(+id);
+}
 // ---------------- ART CRUD ----------------
   // @Post(':id/art')
   // createArt(@Param('id') id: string, @Body() data: Partial<Art>) {
