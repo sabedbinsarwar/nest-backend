@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Artist } from "src/artist/entities/artist.entity";
 import { Order } from "src/modules/order/entities/order.entity";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
@@ -22,3 +23,29 @@ export class OrderItem {
     @ManyToOne(() => Order, order => order.orderItems, {cascade: true, onDelete: 'CASCADE', onUpdate: 'CASCADE'})
     order: Order;
 }
+=======
+import { Artist } from "src/artist/entities/artist.entity";
+import { Order } from "src/modules/order/entities/order.entity";
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+
+@Entity('orderItem')
+export class OrderItem {
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
+
+    @Column()
+    title: string;
+
+    @ManyToOne(() => Artist)
+    artist: Artist;
+
+    @Column({ type: 'decimal' })
+    price: number;
+
+    @Column({ nullable: true })
+    url?: string;
+
+    @ManyToOne(() => Order, order => order.orderItems, {cascade: true, onDelete: 'CASCADE', onUpdate: 'CASCADE'})
+    order: Order;
+}
+>>>>>>> 52ebfe7e64a0aa28a39f7f2ba31071b6d8378541

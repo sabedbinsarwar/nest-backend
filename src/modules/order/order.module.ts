@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Module } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { OrderController } from './order.controller';
@@ -16,3 +17,23 @@ import { CustomerModule } from '../customer/customer.module';
   providers: [OrderService],
 })
 export class OrderModule {}
+=======
+import { Module } from '@nestjs/common';
+import { OrderService } from './order.service';
+import { OrderController } from './order.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Order } from './entities/order.entity';
+import { OrderItem } from '../order-item/entities/order-item.entity';
+import { Customer } from '../customer/entities/customer.entity';
+import { CustomerModule } from '../customer/customer.module';
+
+@Module({
+  imports: [
+    CustomerModule,
+    TypeOrmModule.forFeature([Order, OrderItem, Customer])
+  ],
+  controllers: [OrderController],
+  providers: [OrderService],
+})
+export class OrderModule {}
+>>>>>>> 52ebfe7e64a0aa28a39f7f2ba31071b6d8378541

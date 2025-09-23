@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
 export class CreateArtistDto {
@@ -16,4 +17,24 @@ export class CreateArtistDto {
   @IsOptional()
   @IsString()
   bio?: string;
+=======
+import { IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+
+export class CreateArtistDto {
+  @IsString()
+  @IsNotEmpty()
+  username: string;
+
+  @MinLength(6)
+  @Matches(/\S*[A-Z]\S*/g, { message: 'password must contain one uppercase letter' })
+  password: string;
+
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @IsOptional()
+  @IsString()
+  bio?: string;
+>>>>>>> 52ebfe7e64a0aa28a39f7f2ba31071b6d8378541
 }

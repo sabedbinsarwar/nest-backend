@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Req, Res, UseGuards, UsePipes, ValidationPipe, UnauthorizedException } from '@nestjs/common';
 import { ArtistService } from './artist.service';
 import { CreateArtistDto } from './dto/create-artist.dto';
@@ -72,4 +73,80 @@ res.cookie('Authorization', `Bearer ${access_token}`, {
     if (String(req.user.id) !== String(id)) throw new UnauthorizedException('Not authorized to delete this artist');
     return this.artistService.remove(id);
   }
+=======
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Req, Res, UseGuards, UsePipes, ValidationPipe, UnauthorizedException } from '@nestjs/common';
+import { ArtistService } from './artist.service';
+import { CreateArtistDto } from './dto/create-artist.dto';
+import { UpdateArtistDto } from './dto/update-artist.dto';
+import { LoginArtistDto } from './dto/login-artist.dto';
+import { AuthService } from 'src/modules/auth/auth.service';
+import { Response } from 'express';
+import { AuthGuard } from 'src/common/guards/auth.guard';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { Role } from 'src/common/enums/role.enum';
+
+@Controller('artist')
+export class ArtistController {
+  constructor(
+    private readonly artistService: ArtistService,
+    private readonly authService: AuthService,
+  ) {}
+
+  @Post('register')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async register(@Body() dto: CreateArtistDto) {
+    return this.artistService.create(dto);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('login')
+  async signIn(
+  @Body() loginArtistDto: LoginArtistDto,
+  @Res({ passthrough: true }) res: Response,
+) {
+  const { access_token } = await this.authService.signIn(
+    loginArtistDto.username,
+    loginArtistDto.password,
+    'artist',
+  );
+
+  const isProd = process.env.NODE_ENV === 'production';
+res.cookie('Authorization', `Bearer ${access_token}`, {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? 'strict' : 'lax',
+  maxAge: parseInt(process.env.JWT_EXPIRES_IN ?? '3600000'),
+});
+
+  return { message: 'Artist login successful' };
+}
+
+
+  @Get()
+  async findAll() {
+    return this.artistService.findAll();
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.artistService.findOne(id);
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Artist)
+  @Put(':id')
+  async update(@Param('id') id: string, @Req() req, @Body() dto: UpdateArtistDto) {
+    if (String(req.user.id) !== String(id)) throw new UnauthorizedException('Not authorized to update this artist');
+    return this.artistService.update(id, dto);
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Artist)
+  @Delete(':id')
+  async remove(@Param('id') id: string, @Req() req) {
+    if (String(req.user.id) !== String(id)) throw new UnauthorizedException('Not authorized to delete this artist');
+    return this.artistService.remove(id);
+  }
+>>>>>>> 52ebfe7e64a0aa28a39f7f2ba31071b6d8378541
 }
