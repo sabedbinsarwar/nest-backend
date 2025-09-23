@@ -14,7 +14,7 @@ import { ArtistModule } from 'src/artist/artist.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN') ?? '60s',
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN') ?? '360000s',
         },
       }),
       inject: [ConfigService],

@@ -35,12 +35,13 @@ export class ArtistController {
     'artist',
   );
 
-  res.cookie('Authorization', `Bearer ${access_token}`, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict',
-    maxAge: parseInt(process.env.JWT_EXPIRES_IN ?? '3600000'),
-  });
+  const isProd = process.env.NODE_ENV === 'production';
+res.cookie('Authorization', `Bearer ${access_token}`, {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? 'strict' : 'lax',
+  maxAge: parseInt(process.env.JWT_EXPIRES_IN ?? '3600000'),
+});
 
   return { message: 'Artist login successful' };
 }

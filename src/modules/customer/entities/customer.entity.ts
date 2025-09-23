@@ -4,7 +4,7 @@ import { Order } from "src/modules/order/entities/order.entity";
 import { Cart } from "src/modules/cart/entities/cart.entity";
 
 @Entity("customer")
-export class Customer implements User {
+export class Customer  {
     @PrimaryGeneratedColumn('uuid')
     id: string;
     @Column({
